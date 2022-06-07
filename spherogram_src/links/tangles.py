@@ -462,4 +462,3 @@ def EncircledIdentityBraid(num_strands):
     """
     braid_word = list(range(num_strands, 0, -1)) + list(range(1, num_strands + 1))
     return BraidTangle(braid_word) + IdentityBraid(1)
-
