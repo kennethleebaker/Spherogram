@@ -176,7 +176,7 @@ class Tangle():
         for i in range(0, n):
             join_strands(T.adjacent[i], T.adjacent[m + i])
         return Link(T.crossings, check_planarity=False)
-    
+
     def annular_closure(self):
         """
         Takes the braid closure with the unknot axis of the closure.
@@ -187,6 +187,35 @@ class Tangle():
             raise ValueError("To do annular closure, both the top and bottom number of strands must be equal")
         return (self * EncircledIdentityBraid(n)).braid_closure()
 
+
+    def link(self):
+        "Get the tangle as a link if its boundary is (0, 0)."
+        if self.boundary != (0, 0):
+            raise ValueError("The boundary must be (0, 0)")
+        return Link(self.copy().crossings, check_planarity=False)
+
+    def reshape(self, boundary, displace=0):
+        """Renumber the boundary strands so that the tangle has the new boundary
+        shape. This is performed by either repeatedly moving the last strands from the
+        bottom right to the top right or vice versa. Simultaneously, displace controls
+        a rotation of the tangle where the tangle is rotated clockwise 'displace' units
+        (so, for example, if 0 <= displace < m then that strand number becomes the new
+        lower-left strand).
+        """
+        m, n = self.boundary
+        Tm, Tn = decode_boundary(boundary)
+        if (m, n) == (Tm, Tn):
+            return self
+        if m + n != Tm + Tn:
+            raise ValueError("Reshaping requires the tangle have the same number of boundary"
+                             " strands as in the new boundary.")
+        T = self.copy()
+        # The 'adjacent' array but in total counterclockwise order
+        adj_ccw = T.adjacent[:m] + list(reversed(T.adjacent[m:]))
+        adj_ccw = rotate_list(adj_ccw, displace)
+
+        return Tangle((Tm, Tn), T.crossings,
+                      adj_ccw[:Tm] + list(reversed(adj_ccw[Tm:])))
 
     def link(self):
         "Get the tangle as a link if its boundary is (0, 0)."
@@ -265,10 +294,14 @@ class Tangle():
     def __repr__(self):
         return "<Tangle: %s>" % self.label
 
-    def describe(self):
+    def describe(self, fuse_strands=False):
         """Give a PD-like description of the tangle in the form
-        Tangle[{lower strands}, {upper strands}, P and X codes]"""
+        Tangle[{lower strands}, {upper strands}, P and X codes].
+
+        If fuse_strands is True, then fuse all internal Strand nodes first."""
         T = self.copy()
+        if fuse_strands:
+            T._fuse_strands(preserve_boundary = True)
         T.label = 0
         # give each crossing/strand a unique identifier
         for i, c in enumerate(T.crossings):
@@ -285,17 +318,16 @@ class Tangle():
                 arc_id = arc_ids.setdefault(arc, len(arc_ids) + 1)
                 arcs.append(arc_id)
             if isinstance(c, Crossing):
-                print("arcs: " + repr(arcs))
-                parts.append("X[%s,%s,%s,%s]" % arcs)
+                parts.append("X[%s,%s,%s,%s]" % tuple(arcs))
             elif isinstance(c, Strand):
-                parts.append("P[%s,%s]" % arcs)
+                parts.append("P[%s,%s]" % tuple(arcs))
             elif isinstance(c, Tangle):
                 lower = "{" + ",".join(str(a) for a in arcs[:T.boundary[0]]) + "}"
                 upper = "{" + ",".join(str(a) for a in arcs[T.boundary[0]:]) + "}"
             else:
                 raise Exception("Unexpected entity")
         parts.sort()
-        return f"Tangle[{lower}, {upper}, {', '.join(parts)}]"
+        return f"Tangle[{lower}, {upper}{''.join(', ' + p for p in parts)}]"
 
 Tangle.bridge_closure = Tangle.numerator_closure
 Tangle.braid_closure = Tangle.denominator_closure
@@ -316,25 +348,21 @@ def ZeroTangle():
                   [(bot, 0), (bot, 1), (top, 0), (top, 1)],
                   "ZeroTangle")
 
-
 def InfinityTangle():
     left, right = Strand('L'), Strand('R')
     return Tangle(2, [left, right],
                   [(left, 0), (right, 0), (left, 1), (right, 1)],
                   "InfinityTangle")
 
-
 def MinusOneTangle():
     c = Crossing('-one')
     return Tangle(2, [c], [(c, 3), (c, 0), (c, 2), (c, 1)],
                   "MinusOneTangle")
 
-
 def OneTangle():
     c = Crossing('one')
     return Tangle(2, [c], [(c, 0), (c, 1), (c, 3), (c, 2)],
                   "OneTangle")
-
 
 def IntegerTangle(n):
     if n == 0:
@@ -429,4 +457,3 @@ def EncircledIdentityBraid(num_strands):
     """
     braid_word = list(range(num_strands, 0, -1)) + list(range(1, num_strands + 1))
     return BraidTangle(braid_word) + IdentityBraid(1)
-
