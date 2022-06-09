@@ -1,6 +1,6 @@
-def double_branched_cover(M,n=None):
+def double_branched_cover(L,n=None):
     """
-    Input: Complement M of a link L where L has one unknot component U 
+    Input: Plink L where L has one unknot component U 
         such that the geometric intersection number of L-U with U is +/- 2.
         n is the index of the unknont component; last component by default.
     
@@ -10,6 +10,7 @@ def double_branched_cover(M,n=None):
     Output: Double branched cover of the exterior of T.
     """
     
+    M=L.exterior()
     
     num_components=M.num_cusps()
     
@@ -18,6 +19,10 @@ def double_branched_cover(M,n=None):
         
     if n==None:
         n=num_components-1
+        
+    if n not in all_two_component_clasps(L):
+        raise Exception("Given unknot component is not a valid clasp.  See all_two_component_clasps(L).")
+        
     
     #assume last cusp is one we don't fill
     fill_list=[(2,0)]*(num_components)
@@ -75,6 +80,7 @@ def double_branched_cover(M,n=None):
         
         return(good_cover_f)
 
+
 def dbc_tangle(T):
     """
     Input T is a spherogram (2,2)-tangle.
@@ -96,3 +102,37 @@ def dbc_tangle(T):
     
     M=T.annular_closure(-1).exterior()
     return double_branched_cover(M)
+    
+def all_two_component_clasps(link):
+    """
+    Given a link, search for unknot components U such that L-U crosses U twice as shown ::
+    
+           |    |
+       ,-- | -- | --,
+      |    |    |    |
+      |    |    |    |
+       `------------'
+           |    |
+           |    |
+    Returns list of indices of all such components
+    
+    # 1 clasp of 2 strands
+    >>>L0 = spherogram.Link('DT: [(-18,8,10,16,14,6,20,4),(-2,12)], [1,1,0,1,0,1,0,0,0,1]')
+
+    # 3 clasps of 2 strands
+    >>>L1 = spherogram.Link('DT: [(18,14,34,-36,32,44,26,40,30,38,-8,-46,-12,-4,-42,-2,-22),'
+                     '(20,-6),(16,-28),(-24,10)],'
+                     '[1,0,0,1,1,0,1,1,0,0,1,1,0,0,0,1,1,1,0,0,1,0,1]')
+    """
+    
+    
+    acceptable = [[True, True, False, False], [True, False, False, True],
+              [False, False, True, True], [False, True, True, False]]
+    
+    ans = []
+    for i, component in enumerate(link.link_components):
+        if len(component) == 4:
+            over_under = [cs.is_over_crossing() for cs in component]
+            if over_under in acceptable:
+                ans.append(i)
+    return ans
