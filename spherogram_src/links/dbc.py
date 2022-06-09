@@ -100,8 +100,8 @@ def dbc_tangle(T):
         raise Exception("Not a (2,2)-tangle.")
     
     
-    M=T.annular_closure(-1).exterior()
-    return double_branched_cover(M)
+    L=T.annular_closure(-1)
+    return double_branched_cover(L)
     
 def all_two_component_clasps(link):
     """
