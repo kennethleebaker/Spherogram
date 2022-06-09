@@ -1,14 +1,28 @@
-def double_branched_cover(M):
+def double_branched_cover(M,n=None):
     """
-    Input: Annular link complement corresponding to a (2,2) tangle T
-    Output: Double branched cover of T
+    Input: Complement M of a link L where L has one unknot component U 
+        such that the geometric intersection number of L-U with U is +/- 2.
+        n is the index of the unknont component; last component by default.
+    
+    Given a (2,2) tangle T, the annular closure of T, together with its axis U, is such a link L. 
+    double_branched_cover assumes the axis U is the last component of L.
+    
+    Output: Double branched cover of the exterior of T.
     """
     
     
     num_components=M.num_cusps()
     
+    if num_components  < 2:
+        raise ValueError("Number of cusps must be at least 2.")
+        
+    if n==None:
+        n=num_components-1
+    
     #assume last cusp is one we don't fill
-    fill_list=[(2,0)]*(num_components-1)+[(0,0)]
+    fill_list=[(2,0)]*(num_components)
+    fill_list[n]=(0,0)
+    
     
     
     M.dehn_fill(fill_list)
