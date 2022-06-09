@@ -218,55 +218,30 @@ class Tangle():
             join_strands(T.adjacent[i], T.adjacent[m + i])
         return Link(T.crossings, check_planarity=False)
     
-    def annular_closure(self):
+    def annular_closure(self, component_idx=None):
         """
         Takes the braid closure with the unknot axis of the closure.
-        TO DO: Ensure that the axis is the last component.
+
+        Inputs:
+        - component_idx gives the component index for the axis of the braid closure
+          using a ComponentStrand. Negative numbers are allowed.
+
+        >>> import snappy
+        >>> M=RationalTangle(2,5).annular_closure(-1).exterior()
+        >>> M.dehn_fill([(0,0),(1,0)])
+        >>> M.filled_triangulation().identify()
+        [m004(0,0), 4_1(0,0), K2_1(0,0), K4a1(0,0), otet02_00001(0,0)]
+
+        >>> M=RationalTangle(2,5).annular_closure(0).exterior()
+        >>> M.dehn_fill([(1,0),(0,0)])
+        >>> M.filled_triangulation().identify()
+        [m004(0,0), 4_1(0,0), K2_1(0,0), K4a1(0,0), otet02_00001(0,0)]
+
         """
         m, n = self.boundary
         if m != n:
             raise ValueError("To do annular closure, both the top and bottom number of strands must be equal")
-        return (self * EncircledIdentityBraid(n)).braid_closure()
-
-
-    def annular_closure(self):
-        """
-        Takes the braid closure with the unknot axis of the closure.
-        TO DO: Ensure that the axis is the last component.
-        """
-        m, n = self.boundary
-        if m != n:
-            raise ValueError("To do annular closure, both the top and bottom number of strands must be equal")
-        return (self * EncircledIdentityBraid(n)).braid_closure()
-
-    def link(self):
-        "Get the tangle as a link if its boundary is (0, 0)."
-        if self.boundary != (0, 0):
-            raise ValueError("The boundary must be (0, 0)")
-        return Link(self.copy().crossings, check_planarity=False)
-
-    def reshape(self, boundary, displace=0):
-        """Renumber the boundary strands so that the tangle has the new boundary
-        shape. This is performed by either repeatedly moving the last strands from the
-        bottom right to the top right or vice versa. Simultaneously, displace controls
-        a rotation of the tangle where the tangle is rotated clockwise 'displace' units
-        (so, for example, if 0 <= displace < m then that strand number becomes the new
-        lower-left strand).
-        """
-        m, n = self.boundary
-        Tm, Tn = decode_boundary(boundary)
-        if (m, n) == (Tm, Tn):
-            return self
-        if m + n != Tm + Tn:
-            raise ValueError("Reshaping requires the tangle have the same number of boundary"
-                             " strands as in the new boundary.")
-        T = self.copy()
-        # The 'adjacent' array but in total counterclockwise order
-        adj_ccw = T.adjacent[:m] + list(reversed(T.adjacent[m:]))
-        adj_ccw = rotate_list(adj_ccw, displace)
-
-        return Tangle((Tm, Tn), T.crossings,
-                      adj_ccw[:Tm] + list(reversed(adj_ccw[Tm:])))
+        return (self * EncircledIdentityBraid(n, component_idx)).braid_closure()
 
     def link(self):
         """Get the tangle as a link if its boundary is (0, 0)."""
@@ -547,12 +522,14 @@ def BraidTangle(gens, n=None):
         b = b * gen(i)
     return b
 
-def EncircledIdentityBraid(num_strands):
+def EncircledIdentityBraid(num_strands, component_idx=None):
     """
     Makes a tangle by encircling the identity braid with an unknot.
     - num_strands is the number of strands
-
-    (ken) warning: This needs to be tested
+    - component_idx if not None is used for a ComponentTangle to specify which component
+      number should be used for the circle. Negative numbers are allowed to count
+      from the last component.
     """
     braid_word = list(range(num_strands, 0, -1)) + list(range(1, num_strands + 1))
-    return BraidTangle(braid_word) + IdentityBraid(1)
+    s = IdentityBraid(1) if component_idx == None else ComponentTangle(component_idx)
+    return BraidTangle(braid_word) + s
