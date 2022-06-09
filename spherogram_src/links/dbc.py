@@ -9,7 +9,7 @@ def double_branched_cover(L,n=None):
     
     Output: Double branched cover of the exterior of T.
     """
-    
+
     M=L.exterior()
     
     num_components=M.num_cusps()
@@ -19,12 +19,10 @@ def double_branched_cover(L,n=None):
         
     if n==None:
         n=num_components-1
-        
+ 
     if n not in all_two_component_clasps(L):
         raise Exception("Given unknot component is not a valid clasp.  See all_two_component_clasps(L).")
-        
     
-    #assume last cusp is one we don't fill
     fill_list=[(2,0)]*(num_components)
     fill_list[n]=(0,0)
     
@@ -79,7 +77,6 @@ def double_branched_cover(L,n=None):
         good_cover_f=good_cover.filled_triangulation()
         
         return(good_cover_f)
-
 
 def dbc_tangle(T):
     """
