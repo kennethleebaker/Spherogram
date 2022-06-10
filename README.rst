@@ -1,6 +1,8 @@
 Spherogram
 ==========
 
+**Note:** This is a version of Spherogram under development as part of the Sage Days Duluth workshop, with a goal toward developing features to be able to input manifolds that are double branched covers of tangles with four boundary points, and it will eventually be merged back into the main Spherogram package. This fork is developed by Ken Baker, Patricia Cahn, Jonathan Johnson, Chaeryn Lee, Kyle Miller, Sean Wakasa, and Becca Winarski.
+
 Spherogram is a Python module for dealing with the kind of planar
 diagrams that arise in 3-dimensional topology, such as link and
 Heegaard diagrams. It a component of the larger
